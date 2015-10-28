@@ -21,7 +21,11 @@ module Surveyor
     # protected
 
       def responses
-        @responses.joins(:response_set).merge(ResponseSet.completed)
+        @responses
+          .joins(:response_set)
+          .merge(ResponseSet.completed)
+          .joins(:question)
+          .merge(Question.net_promoter)
       end
 
       def query
@@ -38,7 +42,7 @@ module Surveyor
       end
 
       def build_result (data)
-        Calculator.new(ResultSet.new(data)).to_h
+        Calculator.new(ResultSet.new(data)).as_hash
       end
 
     end

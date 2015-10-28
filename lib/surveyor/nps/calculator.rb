@@ -1,14 +1,16 @@
 module Surveyor
   module Nps
     class Calculator
-      DETRACTOR = 0.. 6
-      PASSIVE   = 7.. 8
-      PROMOTER  = 9..10
+      DETRACTOR          = 0.. 6
+      PASSIVE            = 7.. 8
+      PROMOTER           = 9..10
+      STANDARD_DEVIATION = 0.98
 
       attr_reader :votes
 
-      def initialize (votes)
-        @votes = votes
+      def initialize (votes, deviations: 2)
+        @votes      = votes
+        @deviations = deviations
       end
 
       def count
@@ -16,21 +18,25 @@ module Surveyor
       end
 
       def score
-        promoter.percent - detractor.percent
+        (promoter.percent - detractor.percent)
       end
 
-      def deviation
+      def standard_error
         Math.sqrt( (( 1-score)**2)*promoter.percent +
                    (( 0-score)**2)*passive.percent  +
                    ((-1-score)**2)*detractor.percent ) / Math.sqrt(count)
       end
 
+      def confidence_interval
+        standard_error * STANDARD_DEVIATION * @deviations
+      end
+
       def high
-        (score + deviation).round(2)
+        (score + confidence_interval)
       end
 
       def low
-        (score - deviation).round(2)
+        (score - confidence_interval)
       end
 
       def detractor
@@ -45,14 +51,17 @@ module Surveyor
         Cohort.new(PROMOTER, votes)
       end
 
-      def to_h
+      def as_hash
         {
-          count:     count,
-          score:     score,
-          deviation: deviation,
-          promoter:  promoter.to_hash,
-          passive:   passive.to_hash,
-          detractor: detractor.to_hash
+          count:               count,
+          score:               score,
+          high:                high,
+          low:                 low,
+          standard_error:      standard_error,
+          confidence_interval: confidence_interval,
+          promoter:            promoter.as_hash,
+          passive:             passive.as_hash,
+          detractor:           detractor.as_hash
         }
       end
 
@@ -66,11 +75,15 @@ module Surveyor
           @votes[@range].reduce(0, :+)
         end
 
-        def percent
-          (100.0 * count / @votes.reduce(0, :+)).round(2)
+        def total_count
+          @votes.reduce(0, :+)
         end
 
-        def to_hash
+        def percent
+          (count.to_f / total_count)
+        end
+
+        def as_hash
           {
             count:   count,
             percent: percent
