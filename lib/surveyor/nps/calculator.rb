@@ -4,13 +4,15 @@ module Surveyor
       DETRACTOR          = 0.. 6
       PASSIVE            = 7.. 8
       PROMOTER           = 9..10
-      STANDARD_DEVIATION = 0.98
+      POINT_ESTIMATE     = 1.96
+
+      ## Confidence Interval to Point Estimate Reference
+      ## [80%, 1.282; 90%, 1.645; 95%, 1.960; 98%, 2.576; 99.9%, 3.291]
 
       attr_reader :votes
 
-      def initialize (votes, deviations: 2)
+      def initialize (votes)
         @votes      = votes
-        @deviations = deviations
       end
 
       def count
@@ -28,7 +30,7 @@ module Surveyor
       end
 
       def confidence_interval
-        standard_error * STANDARD_DEVIATION * @deviations
+        standard_error * POINT_ESTIMATE
       end
 
       def high
