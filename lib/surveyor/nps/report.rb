@@ -14,8 +14,8 @@ module Surveyor
         result.to_json
       end
 
-      def group_by_day
-        GroupedReport.new(@responses, group_by: "date(response_sets.completed_at)")
+      def group_by (select)
+        GroupedReport.new(@responses, group_by: select)
       end
 
     # protected
